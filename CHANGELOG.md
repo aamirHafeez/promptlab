@@ -18,6 +18,11 @@ All notable changes to this project are documented here. The format follows
 - HTML report `_escape()` now also escapes quotes for defense in depth.
 - `llm_judge` now takes the **last** integer from the judge response and
   clamps to 1–10, preventing misparsing.
+- README install command fixed — was pointing at unpublished PyPI package;
+  now uses `pip install git+https://...` with a note about future PyPI
+  release. Broken PyPI badges removed.
+- Judge provider HTTP client is now closed after the evaluation phase,
+  preventing `ResourceWarning` when using `--judge`.
 
 ### Changed
 - Provider instances are now cached and reused across cells (one per
@@ -30,6 +35,8 @@ All notable changes to this project are documented here. The format follows
   the other chat-based providers.
 - Transient HTTP errors (429, 5xx) are retried up to 2 times with
   exponential backoff.
+- Retry now also covers transient network errors (`ConnectError`,
+  `TimeoutException`, etc.) — not just HTTP status codes.
 - CI now enforces `ruff format --check` alongside `ruff check`.
 
 ### Added

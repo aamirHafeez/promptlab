@@ -127,11 +127,16 @@ class Runner:
                     break
                 except Exception as exc:  # noqa: BLE001 - surface any provider error per-cell
                     last_exc = exc
-                    # Only retry on HTTP 429 (rate limit) or 5xx (server error).
-                    if isinstance(exc, httpx.HTTPStatusError) and exc.response.status_code in _RETRYABLE_CODES:
-                        if attempt < _MAX_RETRIES:
-                            await asyncio.sleep(_RETRY_BASE_SECONDS * (2**attempt))
-                            continue
+                    should_retry = False
+                    if isinstance(exc, (httpx.TimeoutException, httpx.TransportError)):
+                        # Transient network errors — always worth retrying.
+                        should_retry = True
+                    elif isinstance(exc, httpx.HTTPStatusError) and exc.response.status_code in _RETRYABLE_CODES:
+                        # HTTP 429 (rate limit) or 5xx (server error).
+                        should_retry = True
+                    if should_retry and attempt < _MAX_RETRIES:
+                        await asyncio.sleep(_RETRY_BASE_SECONDS * (2**attempt))
+                        continue
                     break
             if last_exc is not None:
                 cell.error = f"{type(last_exc).__name__}: {last_exc}"
@@ -163,15 +168,19 @@ class Runner:
         cases = self.config.test_cases or [TestCase()]
         judge = get_provider(self.judge_id) if self.judge_id else None
         ctx = EvalContext(judge=judge)
-        for cell in cells:
-            if cell.error is not None or cell.response is None or cell.skipped:
-                continue
-            for assertion in cases[cell.case_index].assertions:
-                try:
-                    cell.evaluations.append(evaluate(cell.response, assertion, ctx))
-                except Exception as exc:  # noqa: BLE001 – never let a broken evaluator abort the run
-                    cell.evaluations.append(
-                        EvalResult(False, assertion.type, f"evaluator error: {type(exc).__name__}: {exc}")
-                    )
+        try:
+            for cell in cells:
+                if cell.error is not None or cell.response is None or cell.skipped:
+                    continue
+                for assertion in cases[cell.case_index].assertions:
+                    try:
+                        cell.evaluations.append(evaluate(cell.response, assertion, ctx))
+                    except Exception as exc:  # noqa: BLE001 – never let a broken evaluator abort the run
+                        cell.evaluations.append(
+                            EvalResult(False, assertion.type, f"evaluator error: {type(exc).__name__}: {exc}")
+                        )
+        finally:
+            if judge is not None:
+                asyncio.run(judge.aclose())
 
         return RunReport(description=self.config.description, cells=cells)

@@ -2,10 +2,9 @@
 
 **pytest for your prompts.** A Python CLI to test, compare, and benchmark prompts across OpenAI, Anthropic, Google Gemini, and local Ollama models.
 
-[![PyPI version](https://img.shields.io/pypi/v/promptlab-ai.svg)](https://pypi.org/project/promptlab-ai/)
-[![Python versions](https://img.shields.io/pypi/pyversions/promptlab-ai.svg)](https://pypi.org/project/promptlab-ai/)
 [![CI](https://github.com/aamirHafeez/promptlab/actions/workflows/ci.yml/badge.svg)](https://github.com/aamirHafeez/promptlab/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python: 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 
 ---
 
@@ -25,8 +24,10 @@ Prompt changes are code changes, but most people ship them on vibes. PromptLab l
 
 ## Install
 
+_PyPI release coming soon — install from source for now._
+
 ```bash
-pip install promptlab-ai
+pip install git+https://github.com/aamirHafeez/promptlab
 ```
 
 The CLI is `promptlab`. Set whichever API keys you need as environment variables:
